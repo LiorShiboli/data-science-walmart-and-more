@@ -102,8 +102,8 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
     results = {
         'Hands Up': None,
         'Lines Count': None,
-        'Exist Open Shapes': None,
-        'Open Shapes Count': None
+        'Exist Closed Shapes': None,
+        'Closed Shapes Count': None
     }
     
     df.columns = map(lambda x: x.replace(" ", ""), df.columns.tolist())
@@ -163,7 +163,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
     results['Hands Up'] = (df.TimeDiff > df.TimeDiff.std()).sum()
    
     
-    # collect 'Exist Open Shapes' and 'Open Shapes Count'
+    # collect 'Exist Closed Shapes' and 'Closed Shapes Count'
     # get zoomed images
     drawed_img = img.copy()
 
@@ -238,14 +238,14 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
     save_trace_image(trace_img)
 
     if (trace_img == 0).sum() == 0:
-        results['Exist Open Shapes'] = False
-        results['Open Shapes Count'] = 0
+        results['Exist Closed Shapes'] = False
+        results['Closed Shapes Count'] = 0
     else:
-        results['Exist Open Shapes'] = True
+        results['Exist Closed Shapes'] = True
         
-        open_shapes_count = 0
+        closed_shapes_count = 0
         while (trace_img == 0).sum() > 0:
-            open_shapes_count += 1
+            closed_shapes_count += 1
             
             found = np.where(trace_img == 0)
             points = list()
@@ -253,7 +253,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
             trace_img = red_spider(trace_img, points)
             save_trace_image(trace_img)
         
-        results['Open Shapes Count'] = open_shapes_count
+        results['Closed Shapes Count'] = closed_shapes_count
     
     return results
     
