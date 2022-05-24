@@ -1,7 +1,7 @@
-# Examples
+# Example:
 # import src.childs_draw as childs_draw
-# childs_draw.child_draw_descrive(7554, 10, True)
-# childs_draw.child_draw_descrive(7557, 12, True)
+# res = childs_draw.child_draw_describe(7557, 12, True)
+# res
 
 # Imports
 import os
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import cv2
 
 data_root_folder = './data'
-show_images_folder = '.'
+save_images_folder = '.'
 
 image_show_number_size = 3
 
@@ -27,9 +27,9 @@ def set_data_root_folder(folder):
     global data_root_folder
     data_root_folder = folder
     
-def set_show_images_folder(folder):
-    global show_images_folder
-    show_images_folder = folder
+def set_save_images_folder(folder):
+    global save_images_folder
+    save_images_folder = folder
     
 def load_image_data(folder_id: int, image_id: int):
     file_name = data_root_folder + '/' + str(folder_id) + '/SimpleTest/' + str(image_id)
@@ -55,13 +55,13 @@ def save_image(img):
     
     global save_image_counter
     global image_show_number_size
-    global show_images_folder
+    global save_images_folder
     
     save_image_counter += 1
     number_as_str = str(save_image_counter)
     while len(number_as_str) < image_show_number_size:
         number_as_str = '0' + number_as_str
-    file_name = show_images_folder + '/show_' + number_as_str + '.png'
+    file_name = save_images_folder + '/show_' + number_as_str + '.png'
     
     if os.path.exists(file_name):
         os.remove(file_name)
@@ -159,6 +159,11 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
     add_column_diff('TiltX')
     add_column_diff('TiltY')
     
+    # collect 'Hands Up'
+    results['Hands Up'] = (df.TimeDiff > df.TimeDiff.std()).sum()
+   
+    
+    # collect 'Exist Open Shapes' and 'Open Shapes Count'
     # get zoomed images
     drawed_img = img.copy()
 
@@ -173,7 +178,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
     drawed_img = drawed_img[bound_y[0]:bound_y[1], bound_x[0]:bound_x[1]]
 
     save_image(drawed_img)
-    
+        
     drawed_img_backup = drawed_img
     
     drawed_img = np.ndarray((drawed_img_backup.shape[0] + 2, drawed_img_backup.shape[1] + 2))
@@ -215,12 +220,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
         steps = 0
         while len(points) > 0:
             (x,y) = points.pop()
-            if img[x,y] == 0:
-                steps += 1
-                
-                if steps % 10**5 == 0:
-                     print(steps, len(points))
-                
+            if img[x,y] == 0:                
                 img[x,y] = 2            
                 for n in [0, 1, 2, 3, 5, 6, 7, 8]:
                     dx = n % 3 - 1
@@ -242,7 +242,18 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
         results['Open Shapes Count'] = 0
     else:
         results['Exist Open Shapes'] = True
-        results['Open Shapes Count'] = 1
+        
+        open_shapes_count = 0
+        while (trace_img == 0).sum() > 0:
+            open_shapes_count += 1
+            
+            found = np.where(trace_img == 0)
+            points = list()
+            points.append((found[0][0], found[1][0]))
+            trace_img = red_spider(trace_img, points)
+            save_trace_image(trace_img)
+        
+        results['Open Shapes Count'] = open_shapes_count
     
     return results
     
