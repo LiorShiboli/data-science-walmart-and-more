@@ -108,7 +108,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
     
     df.columns = map(lambda x: x.replace(" ", ""), df.columns.tolist())
     
-    # Maybe not needabel
+    # Maybe not needable
     last_message1 = df.iloc[-2]['X']
     last_message2 = df.iloc[-1]['X']
     
@@ -161,7 +161,9 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
     
     # collect 'Hands Up'
     results['Hands Up'] = (df.TimeDiff > df.TimeDiff.std()).sum()
-   
+    
+    # collect 'Lines Count'
+    
     
     # collect 'Exist Closed Shapes' and 'Closed Shapes Count'
     # get zoomed images
