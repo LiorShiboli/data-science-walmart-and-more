@@ -164,6 +164,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
     
     # collect 'Lines Count'
     
+    return df
     
     # collect 'Exist Closed Shapes' and 'Closed Shapes Count'
     # get zoomed images
