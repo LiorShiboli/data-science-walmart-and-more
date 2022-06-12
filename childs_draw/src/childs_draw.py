@@ -224,7 +224,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
         while len(points) > 0:
             (x,y) = points.pop()
             if img[x,y] == 0:                
-                img[x,y] = 2            
+                img[x,y] = 2
                 for n in [0, 1, 2, 3, 5, 6, 7, 8]:
                     dx = n % 3 - 1
                     dy = int(n/3) - 1
