@@ -6,6 +6,8 @@
 # Imports
 import os
 import sys
+
+import random
 import time
 
 import numpy as np
@@ -22,6 +24,7 @@ image_show_number_size = 3
 
 g_save_images_enabled = True
 save_image_counter = 0
+
 
 def set_data_root_folder(folder):
     global data_root_folder
@@ -68,11 +71,13 @@ def save_image(img):
     
     return cv2.imwrite(file_name, img)
 
+
+trace_image_counter = 0
 def save_trace_image(img):
     global g_save_images_enabled
     if not g_save_images_enabled:
         return True
-    
+        
     rgb_img = np.ndarray((img.shape[0], img.shape[1], 3))
     
     rgb_img[:, :, :] = 0
@@ -86,7 +91,7 @@ def save_trace_image(img):
         rgb_img[found[0][i],found[1][i], 2] = 255
     
     rgb_img[(rgb_img[:, :, 0] == 0) & (rgb_img[:, :, 1] == 0) & (rgb_img[:, :, 2] == 0)] = 255
-        
+    
     return save_image(rgb_img)
 
 
@@ -164,7 +169,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
     
     # collect 'Lines Count'
     
-    return df
+    #return df
     
     # collect 'Exist Closed Shapes' and 'Closed Shapes Count'
     # get zoomed images
@@ -198,7 +203,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
 
     trace_img = drawed_img.copy()
     trace_img[drawed_img == 0] = 1
-
+    
     save_trace_image(trace_img)
 
     # red_spider function
@@ -219,12 +224,17 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
                 points.append((img.shape[0] - 2, y))
         else: # Try to get more shapes
             pass
-        
+                
         steps = 0
         while len(points) > 0:
-            (x,y) = points.pop()
+            
+            i = random.randint(0, len(points) - 1)
+            (x,y) = points[i]
+            points.remove(points[i])
+            
             if img[x,y] == 0:                
-                img[x,y] = 2            
+                img[x,y] = 2
+                save_trace_image(img)
                 for n in [0, 1, 2, 3, 5, 6, 7, 8]:
                     dx = n % 3 - 1
                     dy = int(n/3) - 1
