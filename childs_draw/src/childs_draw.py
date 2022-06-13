@@ -10,6 +10,7 @@ import shutil
 
 import time
 import math
+import random
 
 import numpy as np
 import pandas as pd
@@ -17,22 +18,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import cv2
-
-import os
-import sys
-import shutil
-
-import time
-import math
-
-import numpy as np
-import pandas as pd
-
-import matplotlib.pyplot as plt
-
-import cv2
-
-import src.childs_draw as childs_draw
 
 # Flags
 DELTA_XY = 40
