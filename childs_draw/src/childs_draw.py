@@ -243,10 +243,12 @@ def get_lines_in_sub_draw(sub_df: pd.DataFrame):
 def get_lines_info(df: pd.DataFrame):
     hands_up = []
     lines = []
-
-    limits = [df.head(1).index[0], df.tail(1).index[0]] + df[df.TimeDiff > df.TimeDiff.std()].index.tolist()
+    
+    disDiff = ((df.XDiff * df.XDiff) + (df.YDiff * df.YDiff)) ** 0.5
+    
+    limits = [df.head(1).index[0], df.tail(1).index[0]] + df[df.TimeDiff > 5 * df.TimeDiff.std()].index.tolist()
     limits = np.unique(list(sorted(limits))).tolist()
-
+    
     index = 0
 
     for i in range(len(limits) - 1):
@@ -333,7 +335,7 @@ def get_shapes_count(img, df: pd.DataFrame):
 
     save_image(drawed_img)
         
-    drawed_img_backup = drawed_img
+    drawed_img_backup = drawed_img.copy()
     
     drawed_img = np.ndarray((drawed_img_backup.shape[0] + 2, drawed_img_backup.shape[1] + 2))
     drawed_img[:, :] = 255
@@ -393,7 +395,7 @@ def get_shapes_count(img, df: pd.DataFrame):
     save_trace_image(trace_img)
 
     if (trace_img == 0).sum() == 0:
-        return 0
+        return (0, drawed_img)
     
     closed_shapes_count = 0
     while (trace_img == 0).sum() > 0:
@@ -405,7 +407,7 @@ def get_shapes_count(img, df: pd.DataFrame):
         trace_img = red_spider(trace_img, points)
         save_trace_image(trace_img)
     
-    return closed_shapes_count
+    return (closed_shapes_count, drawed_img_backup)
 
 def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool = False):
     global g_save_images_enabled
@@ -423,7 +425,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
     img, df = load_draw(folder_id, image_id)
 
     lines_info = get_lines_info(df)
-    closed_shapes_count = get_shapes_count(img, df)
+    (closed_shapes_count, drawed_img) = get_shapes_count(img, df)
 
     results['Hands Up Count'] = lines_info['Hands Up Count']
     results['Lines Count'] = lines_info['Lines Count']
@@ -432,6 +434,7 @@ def child_draw_describe(folder_id: int, image_id: int, save_images_enabled: bool
 
     results['Exist Closed Shapes'] = closed_shapes_count != 0
     results['Closed Shapes Count'] = closed_shapes_count
+    results['Drawed Image'] = drawed_img
 
     return results
 
@@ -448,6 +451,11 @@ class ChildDrawDescribe:
             'Closed Shapes Count': self.results['Closed Shapes Count'],
             'Lines Info': self.results['Lines Info'][['Distance', 'Mean Pressure']]
         }        
+    
+    def print_image(self):
+        drawed_img = self.results['Drawed Image']
+        plt.imshow(drawed_img, cmap='gray')
+        plt.show()
     
     def print_lines_plots(self):
         hands_up = self.results['Hands Up Info']
