@@ -36,6 +36,7 @@ image_show_number_size = 3
 g_save_images_enabled = True
 save_image_counter = 0
 
+
 def set_data_root_folder(folder):
     global data_root_folder
     data_root_folder = folder
@@ -419,7 +420,7 @@ def get_shapes_count(img, df: pd.DataFrame):
 
     trace_img = drawed_img.copy()
     trace_img[drawed_img == 0] = 1
-
+    
     save_trace_image(trace_img)
 
     # red_spider function
@@ -440,7 +441,7 @@ def get_shapes_count(img, df: pd.DataFrame):
                 points.append((img.shape[0] - 2, y))
         else: # Try to get more shapes
             pass
-        
+                
         steps = 0
         while len(points) > 0:
             (x,y) = points[0]
