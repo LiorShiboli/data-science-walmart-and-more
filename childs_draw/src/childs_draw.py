@@ -37,7 +37,10 @@ import src.childs_draw as childs_draw
 # Flags
 DELTA_XY = 40
 DIRECT_COUNT_RATIO = 10
-MAX_DIFF = 10
+
+STEP_TIME = 0.1
+MIN_DISTANCE = 10
+MAX_DIFF = 20
 
 # Configs
 data_root_folder = './data'
@@ -154,7 +157,7 @@ def get_next_block(sub_df: pd.DataFrame, current, distance: float):
             return i
     return len(sub_df) - 1
 
-def get_lines_in_sub_draw(sub_df: pd.DataFrame):
+def get_lines_in_sub_draw_old(sub_df: pd.DataFrame):
     lines_cons = [0]
     last_con_index = 0
     
@@ -240,13 +243,93 @@ def get_lines_in_sub_draw(sub_df: pd.DataFrame):
         
     return lines
 
+
+def get_max_diff_from_line(sub_df: pd.DataFrame, start_index, end_index):
+    x1, y1 = sub_df.iloc[start_index][['X', 'Y']]
+    x2, y2 = sub_df.iloc[end_index][['X', 'Y']]
+    
+    points = sub_df.iloc[start_index:end_index][['X', 'Y']]
+            
+    direct_line_size = DIRECT_COUNT_RATIO * len(points.index)
+    direct_line_x = np.linspace(x1, x2, num=direct_line_size).tolist()
+    direct_line_y = np.linspace(y1, y2, num=direct_line_size).tolist()
+    
+    max_diff = 0
+    distance = 0
+    max_diff_index = start_index
+    
+    for point_i in range(start_index, end_index):
+        x, y = sub_df.iloc[point_i][['X', 'Y']]
+        
+        # increase distance
+        x_next, y_next  = sub_df.iloc[point_i + 1][['X', 'Y']]
+        distance += get_distance(x, y, x_next, y_next)
+        
+        # update max_diff
+        min_diff_point = get_distance(x, y, x1, y1)
+
+        for di in range(direct_line_size):       
+            dis = get_distance(x, y, direct_line_x[di], direct_line_y[di])
+            min_diff_point = min([min_diff_point, dis])
+
+        if min_diff_point > max_diff:
+            max_diff = min_diff_point
+            max_diff_index = point_i
+    
+    return (max_diff, max_diff_index, distance)
+
+def get_lines(sub_df: pd.DataFrame, start_index, end_index):    
+    lines = []
+    
+    while start_index < end_index:
+        lim_index = end_index
+        
+        max_diff = MAX_DIFF + 1
+        distance = MIN_DISTANCE + 1
+        
+        max_diff, max_diff_index, distance = get_max_diff_from_line(sub_df, start_index, end_index)
+        
+        while (max_diff >= MAX_DIFF) and (distance > MIN_DISTANCE) and (start_index < lim_index):            
+            lim_index = max_diff_index
+            max_diff, max_diff_index, distance = get_max_diff_from_line(sub_df, start_index, lim_index)
+            
+        lines += [(start_index, lim_index)]
+                
+        start_index = lim_index
+    
+    return lines
+
+def get_lines_in_sub_draw(sub_df: pd.DataFrame):
+    lines = get_lines(sub_df, 0, len(sub_df.index) - 1)
+    
+    lines_info = []
+    
+    for line in lines:
+        start_index, end_index = line
+        
+        line_points = sub_df.iloc[start_index: end_index]
+        
+        distance = 0
+        
+        for j in range(start_index, end_index):
+            p1 = sub_df.loc[j]
+            p2 = sub_df.loc[j + 1]
+            distance += get_distance(p1['X'], p1['Y'], p2['X'], p2['Y'])
+    
+        lines_info += [{
+            'Distance': distance,
+            'Mean Pressure': line_points['Pressure'].mean(),
+            'X': line_points['X'],
+            'Y': line_points['Y']
+        }]
+        
+    return lines_info
+
 def get_lines_info(df: pd.DataFrame):
     hands_up = []
     lines = []
-    
-    disDiff = ((df.XDiff * df.XDiff) + (df.YDiff * df.YDiff)) ** 0.5
-    
-    limits = [df.head(1).index[0], df.tail(1).index[0]] + df[df.TimeDiff > 5 * df.TimeDiff.std()].index.tolist()
+        
+    limits = [df.head(1).index[0], df.tail(1).index[0]] + df[df.TimeDiff > STEP_TIME].index.tolist()
     limits = np.unique(list(sorted(limits))).tolist()
     
     index = 0
